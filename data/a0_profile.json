@@ -1,0 +1,32 @@
+{
+  "description": "A0 admission snapshot — built from 50-step burn-in (seed=42)",
+  "paper_ref": "Definition 2: A0 = f(C, E0, L) (Fernandez 2026, §3)",
+  "generated_by": "runner/experiment.py, burn_in_steps=50, seed=42",
+
+  "tool_distribution": {
+    "safe_read":      0.3751,
+    "safe_query":     0.3748,
+    "moderate_write": 0.1002,
+    "moderate_send":  0.0998,
+    "risky_execute":  0.0252,
+    "risky_delegate": 0.0249
+  },
+
+  "depth": {
+    "mean": 1.0,
+    "std":  0.0,
+    "min":  1,
+    "max":  1
+  },
+
+  "mean_risk_score": 0.148,
+
+  "build_params": {
+    "burn_in_steps": 50,
+    "seed": 42,
+    "p_safe":     0.75,
+    "p_boundary": 0.20,
+    "p_risky":    0.05,
+    "ema_alpha":  0.15
+  }
+}

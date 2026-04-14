@@ -8,3 +8,11 @@ results_1000/
 results_langgraph/
 *.csv
 *.log
+
+# Keep data scaffolding but ignore large runtime dumps
+data/raw_traces/*.json
+data/runs/*.json
+# data/a0_profile.json is tracked (reproducibility reference)
+
+# Generated report
+analysis/stats_report.json
