@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+.mcp.json
+results/
+results_1000/
+results_langgraph/
+*.csv
+*.log

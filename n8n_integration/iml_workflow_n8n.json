@@ -1,0 +1,253 @@
+{
+  "name": "IML Agent Monitor — Real Trace Collection",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "iml-monitor",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "IML Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300],
+      "webhookId": "iml-monitor-001"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "route-init",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "init"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "init"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "route-reset",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "reset"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "reset"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "route-event",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    },
+                    "leftValue": "={{ $json.body.tool }}",
+                    "rightValue": ""
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "event"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "router",
+      "name": "Route Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// IML INIT — Establish A0 from burn-in events\n// POST body: { action: 'init', agent_id: string, burn_in: [{tool, depth},...] }\n// ============================================================\nconst body = $input.first().json.body;\nconst agentId = body.agent_id;\nconst burnIn = body.burn_in || [];\n\nif (!agentId) throw new Error('agent_id required');\nif (burnIn.length === 0) throw new Error('burn_in events required');\n\nconst ALL_TOOLS = ['safe_read','safe_query','moderate_write','moderate_send','risky_execute','risky_delegate'];\n\n// Compute P0: empirical frequency over burn-in tools\nconst counts = {};\nALL_TOOLS.forEach(t => counts[t] = 0);\nburnIn.forEach(e => {\n  const t = e.tool;\n  if (counts[t] !== undefined) counts[t]++;\n});\nconst n = burnIn.length;\nconst P0 = {};\nALL_TOOLS.forEach(t => P0[t] = (counts[t] + 1) / (n + ALL_TOOLS.length));\n\n// Compute depth stats\nconst depths = burnIn.map(e => e.depth || 1);\nconst depthMean = depths.reduce((a,b) => a+b, 0) / depths.length;\nconst depthVar = depths.reduce((a,b) => a + Math.pow(b - depthMean, 2), 0) / depths.length;\nconst depthStd = Math.sqrt(depthVar) || 1;\n\n// Persist session\nconst staticData = $getWorkflowStaticData('global');\nif (!staticData.sessions) staticData.sessions = {};\n\nstaticData.sessions[agentId] = {\n  P0, depthMean, depthStd,\n  step: 0,\n  toolCounts: {},\n  emaState: 0.0,\n  createdAt: Date.now(),\n  burnInSize: n\n};\nALL_TOOLS.forEach(t => staticData.sessions[agentId].toolCounts[t] = 0);\n\nreturn [{\n  json: {\n    status: 'initialized',\n    agent_id: agentId,\n    burn_in_size: n,\n    A0_depth_mean: Math.round(depthMean * 1000) / 1000,\n    A0_depth_std: Math.round(depthStd * 1000) / 1000,\n    P0\n  }\n}];"
+      },
+      "id": "init-a0",
+      "name": "Init A0",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// IML RESET — Clear session data\n// POST body: { action: 'reset', agent_id: string }\n// ============================================================\nconst body = $input.first().json.body;\nconst agentId = body.agent_id;\n\nconst staticData = $getWorkflowStaticData('global');\nif (staticData.sessions && staticData.sessions[agentId]) {\n  delete staticData.sessions[agentId];\n  return [{ json: { status: 'reset', agent_id: agentId } }];\n}\nreturn [{ json: { status: 'not_found', agent_id: agentId } }];"
+      },
+      "id": "reset-session",
+      "name": "Reset Session",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// IML ENGINE — Process event, compute D_hat\n// POST body: { agent_id, tool, depth, action? }\n// Returns: { step, D_hat, D_t, D_c, D_l, enforcement, alert, alert_level }\n// ============================================================\n\nconst ALL_TOOLS = ['safe_read','safe_query','moderate_write','moderate_send','risky_execute','risky_delegate'];\n\nconst TOOL_RISK = {\n  'safe_read': 0.0, 'safe_query': 0.0,\n  'moderate_write': 0.5, 'moderate_send': 0.5,\n  'risky_execute': 1.0, 'risky_delegate': 1.0\n};\n\n// Jensen-Shannon divergence (base-2, returns value in [0,1])\nfunction jsDiv(p, q) {\n  let div = 0;\n  for (const k of ALL_TOOLS) {\n    const pk = p[k] || 1e-10;\n    const qk = q[k] || 1e-10;\n    const m = (pk + qk) / 2;\n    if (pk > 0) div += pk * Math.log2(pk / m);\n    if (qk > 0) div += qk * Math.log2(qk / m);\n  }\n  return Math.min(div / 2, 1.0);\n}\n\nconst body = $input.first().json.body;\nconst agentId = body.agent_id;\nconst tool = body.tool;\nconst depth = body.depth || 1;\n\nif (!agentId) throw new Error('agent_id required');\nif (!tool) throw new Error('tool required');\nif (!ALL_TOOLS.includes(tool)) throw new Error('unknown tool: ' + tool);\n\nconst staticData = $getWorkflowStaticData('global');\nif (!staticData.sessions) staticData.sessions = {};\n\nlet sess = staticData.sessions[agentId];\nif (!sess) {\n  // Auto-init with uniform distribution\n  const P0 = {};\n  ALL_TOOLS.forEach(t => P0[t] = 1 / ALL_TOOLS.length);\n  sess = { P0, depthMean: 1.0, depthStd: 1.0, step: 0, toolCounts: {}, emaState: 0.0, createdAt: Date.now(), burnInSize: 0 };\n  ALL_TOOLS.forEach(t => sess.toolCounts[t] = 0);\n  staticData.sessions[agentId] = sess;\n}\n\n// Update trace\nsess.step += 1;\nsess.toolCounts[tool] = (sess.toolCounts[tool] || 0) + 1;\nconst step = sess.step;\n\n// P_tau: empirical freq over current trace (Laplace smoothed)\nconst totalTools = ALL_TOOLS.reduce((s, t) => s + sess.toolCounts[t], 0);\nconst P_tau = {};\nALL_TOOLS.forEach(t => P_tau[t] = (sess.toolCounts[t] + 1) / (totalTools + ALL_TOOLS.length));\n\n// D_t: temporal drift\nconst D_t = jsDiv(P_tau, sess.P0);\n\n// D_c: constraint proximity\nconst D_c = TOOL_RISK[tool] || 0;\n\n// D_l: lineage deviation (capped at 3 sigma)\nconst depthDev = Math.abs(depth - sess.depthMean) / (sess.depthStd || 1);\nconst D_l = Math.min(depthDev / 3.0, 1.0);\n\n// D_hat: weighted EMA\nconst rawD = 0.40 * D_t + 0.35 * D_c + 0.25 * D_l;\nsess.emaState = 0.15 * rawD + 0.85 * sess.emaState;\nconst D_hat = sess.emaState;\n\n// Enforcement: always 0 (T2 theorem)\nconst enforcement = 0;\n\n// Alert\nconst alert = D_hat > 0.30;\nlet alert_level = 'normal';\nif (D_hat > 0.50) alert_level = 'high';\nelse if (D_hat > 0.30) alert_level = 'medium';\n\n// Persist\nstaticData.sessions[agentId] = sess;\n\nreturn [{\n  json: {\n    agent_id: agentId,\n    step,\n    tool,\n    depth,\n    D_hat: Math.round(D_hat * 10000) / 10000,\n    D_t:   Math.round(D_t   * 10000) / 10000,\n    D_c:   Math.round(D_c   * 10000) / 10000,\n    D_l:   Math.round(D_l   * 10000) / 10000,\n    enforcement,\n    alert,\n    alert_level,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "iml-engine",
+      "name": "IML Engine",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 500]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-init",
+      "name": "Respond Init",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [860, 100]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-reset",
+      "name": "Respond Reset",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-event",
+      "name": "Respond Event",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [860, 500]
+    }
+  ],
+  "connections": {
+    "IML Webhook": {
+      "main": [
+        [
+          {
+            "node": "Route Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Action": {
+      "main": [
+        [
+          {
+            "node": "Init A0",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reset Session",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IML Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init A0": {
+      "main": [
+        [
+          {
+            "node": "Respond Init",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reset Session": {
+      "main": [
+        [
+          {
+            "node": "Respond Reset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IML Engine": {
+      "main": [
+        [
+          {
+            "node": "Respond Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null
+}
