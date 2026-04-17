@@ -16,3 +16,28 @@ data/runs/*.json
 
 # Generated report
 analysis/stats_report.json
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.pdf
+
+# Claude Code local config
+.claude/
+
+# Misc docs (local only)
+Claude.md.md
+
+# Embedded git repos (separate projects)
+awesome-skills/
+iml-benchmark/
+
+# Working analysis documents (AI chat exports — local only)
+documentos complementarios/

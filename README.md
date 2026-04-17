@@ -140,13 +140,15 @@ This benchmark empirically validates three formal results from the paper:
 
 ---
 
-## Part of the Agent Governance Trilogy
+## Part of the Agent Governance Series
 
-| Paper | Title | Status |
-|---|---|---|
-| **Paper 1** | [Agent Control Protocol (ACP)](https://arxiv.org/abs/2603.18829) | Published |
-| **Paper 2** | From Admission to Invariants (this repo) | In submission |
-| **Paper 3** | Fairness and Resource-Constrained Observability | Future work |
+| Paper | Title | Repo | Status |
+|---|---|---|---|
+| **Paper 0** | Atomic Decision Boundaries | [decision-boundary-model](https://github.com/chelof100/decision-boundary-model) | In preparation |
+| **Paper 1** | Agent Control Protocol (ACP) | [acp-framework-en](https://github.com/chelof100/acp-framework-en) | [Published — arXiv:2603.18829](https://arxiv.org/abs/2603.18829) |
+| **Paper 2** | From Admission to Invariants (this repo) | [iml-benchmark](https://github.com/chelof100/iml-benchmark) | In preparation |
+| **Paper 3** | Fair Atomic Governance | [fair-atomic-governance](https://github.com/chelof100/fair-atomic-governance) | In preparation |
+| **Paper 4** | Irreducible Multi-Scale Governance | [compositional-governance](https://github.com/chelof100/compositional-governance) | In preparation |
 
 ---
 

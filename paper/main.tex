@@ -1,24 +1,39 @@
 \documentclass[11pt]{article}
 
-% ── Layout ────────────────────────────────────────────────────────────────────
-% For NeurIPS submission: replace with \usepackage[final]{neurips_2025}
-\usepackage[margin=1.35in,top=1in,bottom=1in]{geometry}
+% --- Encoding & fonts (matches ACP) ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[protrusion=true,expansion=false]{microtype}
+\setlength{\emergencystretch}{3em}
+
+% --- Page geometry ---
+\usepackage[margin=1in, top=1.1in, bottom=1.1in]{geometry}
 
 % ── Packages ──────────────────────────────────────────────────────────────────
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{booktabs}
 \usepackage{graphicx}
-\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage[colorlinks=true,
+            linkcolor=blue!70!black,
+            citecolor=blue!70!black,
+            urlcolor=blue!70!black]{hyperref}
 \usepackage{xcolor}
-\usepackage[protrusion=true,expansion=false]{microtype}
-\setlength{\emergencystretch}{3em}
 \usepackage{enumitem}
-\usepackage{times}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage{caption}
 \captionsetup{font=small,labelfont=bf}
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,backgrounds,patterns}
+
+% --- Section formatting (matches ACP) ---
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+
+% --- Paragraph spacing (matches ACP) ---
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
 
 % ── Theorem environments ──────────────────────────────────────────────────────
 \newtheorem{theorem}{Theorem}[section]
@@ -81,10 +96,14 @@ provably finite detection delay, operating in the region where enforcement is
 structurally blind.
 We validate the theoretical claims across four experimental settings:
 three controlled drift scenarios (300 and 1000 steps), a live \textbf{n8n}
-webhook pipeline, and a real \textbf{LangGraph} \texttt{StateGraph} agent---in
-every case, enforcement triggers zero violations while IML deviation grows
-monotonically, detecting each drift type within 9--258 steps of drift onset.
+webhook pipeline, and a \textbf{LangGraph} \texttt{StateGraph} agent with
+deterministic tool selection---in every case, enforcement triggers zero
+violations while IML deviation grows monotonically, detecting each drift
+type within 9--258 steps of drift onset.
 \end{abstract}
+
+\tableofcontents
+\newpage
 
 % ── 1. Introduction ───────────────────────────────────────────────────────────
 \section{Introduction}
@@ -873,6 +892,53 @@ property that $g$ cannot observe.  Tool and context drift cross $\theta =
 0.20$ near steps 256--258, demonstrating that $D_t$ and $D_c$ are jointly
 sufficient to detect distributional shift.
 
+Figure~\ref{fig:component_breakdown} shows the per-component trajectories
+($D_t$, $D_c$, $D_l$) across all three scenarios, clarifying which
+dimension of $\Azero$ drives detection in each case.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig2_component_breakdown.png}
+  \caption{Per-component deviation trajectories ($D_t$: temporal drift via
+           JS divergence; $D_c$: constraint proximity via average tool risk;
+           $D_l$: lineage deviation via delegation depth).
+           \emph{Delegation drift} (middle): $D_l$ dominates and saturates
+           at $1.0$ by step~170, accounting for the early $T^*$.
+           \emph{Tool drift} (left): $D_t$ and $D_c$ grow jointly; $D_l$
+           remains near zero since depth is unaffected.
+           \emph{Context drift} (right): similar to tool drift but with
+           slower $D_c$ growth due to moderate-tool selection.
+           Drift onset at $t=50$ (dashed line).}
+  \label{fig:component_breakdown}
+\end{figure}
+
+\paragraph{Detection delay vs.\ theoretical bound.}
+Corollary~\ref{cor:delay} gives $T^* \leq t_0 + (\theta +
+\varepsilon_{\mathrm{est}}) / \alpha$, where $\alpha$ is the empirical
+drift rate (slope of $D_t^*$ post-onset) and $\varepsilon_{\mathrm{est}}
+\approx 0.02$ from EMA convergence.  Using the observed post-onset slope as
+a lower bound on~$\alpha$, Table~\ref{tab:bounds} confirms that all
+observed $T^*$ values satisfy the bound with margin.
+
+\begin{table}[h]
+\centering
+\caption{Observed detection delay vs.\ Corollary~\ref{cor:delay} bound
+         ($t_0 = 50$, $\theta = 0.20$, $\varepsilon_{\mathrm{est}} = 0.02$).
+         Slope $\alpha$ estimated from observed $\Dhat$ growth over 250
+         post-onset steps.  All observed $T^*$ satisfy the bound.}
+\label{tab:bounds}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Scenario & $\alpha$ (per step) & Bound $T^* \leq$ & Observed $T^*$ & Margin \\
+\midrule
+Tool drift       & $0.00087$ & $t_0 + 253 = 303$ & $256$ & $47$ \\
+Delegation drift & $0.00156$ & $t_0 + 141 = 191$ & $130$ & $61$ \\
+Context drift    & $0.00085$ & $t_0 + 259 = 309$ & $258$ & $51$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \paragraph{IML vs.\ anomaly detector: two distinct failure modes.}
 The comparison between IML and B2 (Figure~\ref{fig:iml_vs_anomaly}) reveals
 two qualitatively different deficiencies of reference-free anomaly detection.
@@ -1011,10 +1077,13 @@ increasing.
 \subsection{LangGraph Agent Experiment}
 \label{sec:langgraph}
 
-To demonstrate IML beyond pure Python simulation, we implement a
-\textbf{LangGraph}~\citep{langchain} agent using a real \texttt{StateGraph}
-with two nodes (\texttt{decide\_tool} $\to$ \texttt{execute\_tool}) and a
-deterministic \texttt{MockLLM} that selects tools without any API calls.
+To demonstrate IML in a real agent-framework execution context, we
+implement a \textbf{LangGraph}~\citep{langchain} \texttt{StateGraph} with
+two nodes (\texttt{decide\_tool} $\to$ \texttt{execute\_tool}) and a
+deterministic \texttt{MockLLM} that selects tools without external API
+calls, providing full reproducibility across seeds.  Using a deterministic
+sampler isolates the IML signal from LLM stochasticity; connecting IML
+to live LLM-backed agents is deferred to future work.
 After a 50-step burn-in under safe-heavy behavior, we induce gradual
 compliant drift over 200 steps by shifting tool selection probabilities
 linearly from $\{$safe: 75\%, boundary: 20\%, risky: 5\%$\}$ toward
@@ -1034,14 +1103,42 @@ throughout all 250 steps.
   \label{fig:langgraph}
 \end{figure}
 
-IML detects the drift with $\Dhat$ rising from $0.010$ at $t=50$ to
-$0.358$ at $t=249$, while enforcement registers zero triggers.
-$T^*_{0.20} = 168$ (118 steps into the drift phase).  Component analysis
-confirms the drift is driven primarily by $D_c$ (boundary tool accumulation)
-and $D_t$ (distributional shift), with $D_l$ activating after $t \approx 150$
-as delegation depth increases.  These results are consistent with the
-simulation benchmarks and confirm that IML operates correctly when
-tool-selection routing passes through a real agent framework.
+We run 6 independent seeds (42, 1--5).
+Table~\ref{tab:langgraph} reports per-seed results; enforcement $= 0$
+in all 6 runs.
+
+\begin{table}[h]
+\centering
+\caption{LangGraph multi-seed results (250 steps each).
+         Enforcement $= 0$ throughout all runs.
+         $T^*_{0.20}$: first step with $\Dhat \geq 0.20$ (step index
+         from $t=0$; drift onset at $t=50$, so steps into drift $= T^* - 50$).}
+\label{tab:langgraph}
+\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Seed & $\Dhat_{\text{final}}$ & $T^*_{0.20}$ (steps into drift) \\
+\midrule
+42   & 0.358 & 168 \quad (118) \\
+1    & 0.338 & 174 \quad (124) \\
+2    & 0.356 & 180 \quad (130) \\
+3    & 0.316 & 190 \quad (140) \\
+4    & 0.353 & 177 \quad (127) \\
+5    & 0.340 & 168 \quad (118) \\
+\midrule
+Mean $\pm$ std & $0.343 \pm 0.016$ & $176 \pm 8$ \quad ($126 \pm 8$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Across all seeds, $\Dhat$ rises from $\approx 0.01$ at drift onset to
+$0.343 \pm 0.016$ at $t=249$, with $T^*_{0.20} = 176 \pm 8$ (detection
+within $126 \pm 8$ steps of drift onset), while enforcement registers zero
+triggers in every run.  Component analysis confirms the drift is driven
+primarily by $D_c$ (boundary tool accumulation) and $D_t$ (distributional
+shift), with $D_l$ activating after $t \approx 150$ as delegation depth
+increases.  These results confirm T2 and T3 on a real agent-framework
+execution stack with consistent behavior across seeds.
 
 % ── 6. Related Work ───────────────────────────────────────────────────────────
 \section{Related Work}
@@ -1065,6 +1162,14 @@ to the enforcement signal.
 shared admission systems, establishing that atomic correctness and drift
 observability together are insufficient for equitable access to the
 decision boundary.
+\citet{fernandez2026comp} (Paper~4) closes the quartet by proving that
+the four layers (Papers~0--3) form a \emph{minimal} compositional
+architecture: under finite observability, no three-layer subset
+simultaneously guarantees atomicity, drift detection, actor-level
+fairness, and Sybil resistance.  IML's $\Dhat$ is used directly as the
+Layer~2 monitoring signal in that composition, and the Non-Identifiability
+Theorem (T2 of this paper) is the formal basis for Case~2 of that paper's
+irreducibility proof.
 
 \paragraph{BAR-Monitor.}
 \citet{fernandez2026acp} introduces the Boundary Activation Rate
