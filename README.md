@@ -2,7 +2,7 @@
 
 **Companion code for:**  
 > Marcelo Fernandez (TraslaIA). *From Admission to Invariants: Measuring Deviation in Delegated Agent Systems.* 2026.  
-> arXiv: [link TBD] · Paper 2 of the Agent Governance Trilogy
+> DOI: [10.5281/zenodo.19643761](https://doi.org/10.5281/zenodo.19643761) · arXiv: [TBD] · Paper 2 of the Agent Governance Series
 
 ---
 
@@ -144,11 +144,11 @@ This benchmark empirically validates three formal results from the paper:
 
 | Paper | Title | Repo | Status |
 |---|---|---|---|
-| **Paper 0** | Atomic Decision Boundaries | [decision-boundary-model](https://github.com/chelof100/decision-boundary-model) | In preparation |
-| **Paper 1** | Agent Control Protocol (ACP) | [acp-framework-en](https://github.com/chelof100/acp-framework-en) | [Published — arXiv:2603.18829](https://arxiv.org/abs/2603.18829) |
-| **Paper 2** | From Admission to Invariants (this repo) | [iml-benchmark](https://github.com/chelof100/iml-benchmark) | In preparation |
-| **Paper 3** | Fair Atomic Governance | [fair-atomic-governance](https://github.com/chelof100/fair-atomic-governance) | In preparation |
-| **Paper 4** | Irreducible Multi-Scale Governance | [compositional-governance](https://github.com/chelof100/compositional-governance) | In preparation |
+| **Paper 0** | Atomic Decision Boundaries | [decision-boundary-model](https://github.com/chelof100/decision-boundary-model) | [Published — Zenodo](https://doi.org/10.5281/zenodo.19642166) · arXiv: TBD |
+| **Paper 1** | Agent Control Protocol (ACP) | [acp-framework-en](https://github.com/chelof100/acp-framework-en) | [Published — arXiv:2603.18829](https://arxiv.org/abs/2603.18829) · [Zenodo](https://doi.org/10.5281/zenodo.19642405) |
+| **Paper 2** | From Admission to Invariants (this repo) | [iml-benchmark](https://github.com/chelof100/iml-benchmark) | [Published — Zenodo](https://doi.org/10.5281/zenodo.19643761) · arXiv: TBD |
+| **Paper 3** | Fair Atomic Governance | [fair-atomic-governance](https://github.com/chelof100/fair-atomic-governance) | [Published — Zenodo](https://doi.org/10.5281/zenodo.19643928) · arXiv: TBD |
+| **Paper 4** | Irreducible Multi-Scale Governance | [compositional-governance](https://github.com/chelof100/compositional-governance) | [Published — Zenodo](https://doi.org/10.5281/zenodo.19643950) · arXiv: TBD |
 
 ---
 
@@ -159,7 +159,8 @@ This benchmark empirically validates three formal results from the paper:
   title   = {From Admission to Invariants: Measuring Deviation in Delegated Agent Systems},
   author  = {Fernandez, Marcelo},
   year    = {2026},
-  note    = {arXiv: [TBD]. Companion code: https://github.com/chelof100/iml-benchmark}
+  doi     = {10.5281/zenodo.19643761},
+  note    = {Zenodo: https://doi.org/10.5281/zenodo.19643761. arXiv: TBD. Companion code: https://github.com/chelof100/iml-benchmark}
 }
 ```
 
