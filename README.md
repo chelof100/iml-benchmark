@@ -2,7 +2,7 @@
 
 **Companion code for:**  
 > Marcelo Fernandez (TraslaIA). *From Admission to Invariants: Measuring Deviation in Delegated Agent Systems.* 2026.  
-> DOI: [10.5281/zenodo.19643761](https://doi.org/10.5281/zenodo.19643761) · arXiv: [TBD] · Paper 2 of the Agent Governance Series
+> DOI: [10.5281/zenodo.19672589](https://doi.org/10.5281/zenodo.19672589) · arXiv: [2604.17517](https://arxiv.org/abs/2604.17517) · Paper 2 of the Agent Governance Series
 
 ---
 
@@ -12,8 +12,11 @@ This repository contains the full Python benchmark for the **Invariant Measureme
 
 **The core result (Theorem 2):** No enforcement signal `g: Σ* → {0,1}` can recover whether an agent's behavior remains within its admission-time admissible space A₀. IML addresses this structural gap by anchoring deviation estimation to a frozen admission snapshot.
 
+**Paper 0 (DBM):** https://github.com/chelof100/decision-boundary-model  
 **Paper 1 (ACP):** https://github.com/chelof100/acp-framework-en  
-**arXiv:** https://arxiv.org/abs/2603.18829
+**Paper 3 (Fairness):** https://github.com/chelof100/fair-atomic-governance  
+**Paper 4 (Compositional):** https://github.com/chelof100/compositional-governance  
+**Paper 5 (RAM):** https://github.com/chelof100/reconstructive-authority-model
 
 ---
 
@@ -140,15 +143,24 @@ This benchmark empirically validates three formal results from the paper:
 
 ---
 
-## Part of the Agent Governance Series
+## Position in the series
 
 | Paper | Title | Repo | Status |
 |---|---|---|---|
-| **Paper 0** | Atomic Decision Boundaries | [decision-boundary-model](https://github.com/chelof100/decision-boundary-model) | [Published — Zenodo](https://doi.org/10.5281/zenodo.19642166) · arXiv: TBD |
-| **Paper 1** | Agent Control Protocol (ACP) | [acp-framework-en](https://github.com/chelof100/acp-framework-en) | [Published — arXiv:2603.18829](https://arxiv.org/abs/2603.18829) · [Zenodo](https://doi.org/10.5281/zenodo.19642405) |
-| **Paper 2** | From Admission to Invariants (this repo) | [iml-benchmark](https://github.com/chelof100/iml-benchmark) | [Published — Zenodo](https://doi.org/10.5281/zenodo.19643761) · arXiv: TBD |
-| **Paper 3** | Fair Atomic Governance | [fair-atomic-governance](https://github.com/chelof100/fair-atomic-governance) | [Published — Zenodo](https://doi.org/10.5281/zenodo.19643928) · arXiv: TBD |
-| **Paper 4** | Irreducible Multi-Scale Governance | [compositional-governance](https://github.com/chelof100/compositional-governance) | [Published — Zenodo](https://doi.org/10.5281/zenodo.19643950) · arXiv: TBD |
+| **Paper 0** | Atomic Decision Boundaries | [decision-boundary-model](https://github.com/chelof100/decision-boundary-model) | [Zenodo](https://doi.org/10.5281/zenodo.19670649) · [arXiv:2604.17511](https://arxiv.org/abs/2604.17511) |
+| **Paper 1** | Agent Control Protocol (ACP) | [acp-framework-en](https://github.com/chelof100/acp-framework-en) | [Zenodo](https://doi.org/10.5281/zenodo.19672575) · [arXiv:2603.18829](https://arxiv.org/abs/2603.18829) |
+| **Paper 2** | From Admission to Invariants (this repo) | [iml-benchmark](https://github.com/chelof100/iml-benchmark) | [Zenodo](https://doi.org/10.5281/zenodo.19672589) · [arXiv:2604.17517](https://arxiv.org/abs/2604.17517) |
+| **Paper 3** | Fair Atomic Governance | [fair-atomic-governance](https://github.com/chelof100/fair-atomic-governance) | [Zenodo](https://doi.org/10.5281/zenodo.19672597) · arXiv: under review |
+| **Paper 4** | Irreducible Multi-Scale Governance | [compositional-governance](https://github.com/chelof100/compositional-governance) | [Zenodo](https://doi.org/10.5281/zenodo.19672608) · arXiv: under review |
+| **Paper 5** | Reconstructive Authority Model (RAM) | [reconstructive-authority-model](https://github.com/chelof100/reconstructive-authority-model) | [Zenodo](https://doi.org/10.5281/zenodo.19669430) · arXiv: under review |
+
+**Series logic:**
+- Paper 0 proves *when* admissibility can be guaranteed (structural necessity).
+- Paper 1 builds a protocol that satisfies that condition (ACP, TLA+ verified).
+- Paper 2 detects behavioral drift invisible to enforcement (IML — this repo).
+- Paper 3 proves correct enforcement does not imply fair allocation (allocation layer).
+- Paper 4 composes all four layers and proves their joint necessity (irreducibility).
+- Paper 5 provides the operational closure: given partial observability, determines when execution is valid at runtime (RAM).
 
 ---
 
@@ -156,11 +168,12 @@ This benchmark empirically validates three formal results from the paper:
 
 ```bibtex
 @misc{fernandez2026iml,
-  title   = {From Admission to Invariants: Measuring Deviation in Delegated Agent Systems},
-  author  = {Fernandez, Marcelo},
-  year    = {2026},
-  doi     = {10.5281/zenodo.19643761},
-  note    = {Zenodo: https://doi.org/10.5281/zenodo.19643761. arXiv: TBD. Companion code: https://github.com/chelof100/iml-benchmark}
+  title        = {From Admission to Invariants: Measuring Deviation in Delegated Agent Systems},
+  author       = {Fernandez, Marcelo},
+  year         = {2026},
+  doi          = {10.5281/zenodo.19672589},
+  howpublished = {\url{https://doi.org/10.5281/zenodo.19672589}},
+  note         = {arXiv:2604.17517. Companion code: https://github.com/chelof100/iml-benchmark}
 }
 ```
 

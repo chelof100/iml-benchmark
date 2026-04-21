@@ -100,11 +100,12 @@ webhook pipeline, and a \textbf{LangGraph} \texttt{StateGraph} agent with
 deterministic tool selection---in every case, enforcement triggers zero
 violations while IML deviation grows monotonically, detecting each drift
 type within 9--258 steps of drift onset.
-This paper is Paper~2 of a 4-paper Agent Governance Series:
+This paper is Paper~2 of a 6-paper Agent Governance Series:
 atomic decision boundaries (P0,~\cite{fernandez2026a}),
 stateful enforcement---ACP (P1,~\cite{fernandez2026acp}),
 fair multi-agent allocation (P3,~\cite{fairgov26}),
-and composition irreducibility (P4,~\cite{fernandez2026comp}).
+composition irreducibility (P4,~\cite{fernandez2026comp}),
+and runtime execution validity---RAM (P5,~\cite{fernandez2026ram}).
 \end{abstract}
 
 \tableofcontents
@@ -1167,14 +1168,18 @@ to the enforcement signal.
 shared admission systems, establishing that atomic correctness and drift
 observability together are insufficient for equitable access to the
 decision boundary.
-\citet{fernandez2026comp} (Paper~4) closes the quartet by proving that
-the four layers (Papers~0--3) form a \emph{minimal} compositional
-architecture: under finite observability, no three-layer subset
-simultaneously guarantees atomicity, drift detection, actor-level
-fairness, and Sybil resistance.  IML's $\Dhat$ is used directly as the
-Layer~2 monitoring signal in that composition, and the Non-Identifiability
-Theorem (T2 of this paper) is the formal basis for Case~2 of that paper's
-irreducibility proof.
+\citet{fernandez2026comp} (Paper~4) proves that the four layers
+(Papers~0--3) form a \emph{minimal} compositional architecture: under
+finite observability, no three-layer subset simultaneously guarantees
+atomicity, drift detection, actor-level fairness, and Sybil resistance.
+IML's $\Dhat$ is used directly as the Layer~2 monitoring signal in that
+composition, and the Non-Identifiability Theorem (T2 of this paper) is
+the formal basis for Case~2 of that paper's irreducibility proof.
+\citet{fernandez2026ram} (Paper~5) closes the series by operationalizing
+the impossibility result of this paper: since full observability is
+unachievable (IML), execution authority must be reconstructed at runtime
+from whatever is observable---the Reconstructive Authority Model (RAM)
+provides the constructive response to IML's impossibility.
 
 \paragraph{BAR-Monitor.}
 \citet{fernandez2026acp} introduces the Boundary Activation Rate
